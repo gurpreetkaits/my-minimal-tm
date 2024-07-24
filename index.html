@@ -36,6 +36,7 @@
                     </div>
                     <div class="col-sm-12 d-flex justify-content-start">
                         <button class="btn btn-dark btn-sm" id="clearAllTask">Clear All</button>
+                        <button class="btn btn-success btn-sm ms-2" id="installBtn">Install</button>
                     </div>
                 </div>
 
@@ -154,6 +155,15 @@
             return `${diffHrs}h ${diffMins}m`;
         }
 
+        function checkIfInstalled() {
+            // Check if the app is running as standalone or in a PWA mode
+            if (window.matchMedia('(display-mode: standalone)').matches || 
+                window.navigator.standalone) {
+                document.getElementById('installBtn').style.display = 'none';
+            }
+        }
+
+        checkIfInstalled();
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function () {
@@ -175,14 +185,9 @@
             deferredPrompt = e;
 
             // Update UI notify the user they can install the PWA
-            const installButton = document.createElement('button');
-            installButton.textContent = 'Install';
-            document.body.appendChild(installButton);
-
+            const installButton = document.getElementById('installBtn')
             installButton.addEventListener('click', (e) => {
-                // Show the install prompt
                 deferredPrompt.prompt();
-                // Wait for the user to respond to the prompt
                 deferredPrompt.userChoice.then((choiceResult) => {
                     if (choiceResult.outcome === 'accepted') {
                         console.log('User accepted the install prompt');
