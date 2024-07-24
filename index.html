@@ -13,12 +13,14 @@
         * {
             font-family: 'Poppins', sans-serif;
         }
+
         .task-done {
             text-decoration: line-through;
         }
-       input[type="checkbox"]:checked {
-        accent-color: black;
-    }
+
+        input[type="checkbox"]:checked {
+            accent-color: black;
+        }
     </style>
 </head>
 
@@ -64,41 +66,43 @@
         }
 
         // Function to create a task item
-        function createTaskItem(text, done = false, created = new Date().toISOString(), completed = null) {
+        function createTaskItem(text, done = false, created = new Date().toISOString(), completed = 'null') {
             const li = document.createElement('li');
-            li.className = 'list-group-item d-flex ';
+            li.className = 'list-group-item d-flex';
 
             const checkbox = document.createElement('input');
             checkbox.type = 'checkbox';
             checkbox.checked = done;
-            checkbox.addEventListener('click', () => {
-                li.classList.toggle('task-done', checkbox.checked);
-                if (checkbox.checked) {
-                    li.dataset.completed = new Date().toISOString();
-                    const timeDiff = calculateTimeDifference(created, li.dataset.completed);
-                    timeSpan.innerText = `Time taken: ${timeDiff}`;
-                } else {
-                    li.dataset.completed = null;
-                    timeSpan.innerText = '';
-                }
-                saveTasks();
-            });
-            
+
+
             const span = document.createElement('span');
             span.className = 'ms-2 text-start';
             span.innerText = text;
             if (done) span.classList.add('task-done');
-        
+
             const timeSpan = document.createElement('span');
             timeSpan.className = 'ms-auto text-muted';
-            timeSpan.innerText = completed ? `Time taken: ${calculateTimeDifference(created, completed)}` : '';
-        
+            timeSpan.innerText = completed !== 'null' ? `Time taken: ${calculateTimeDifference(created, completed)}` : '';
+
             li.appendChild(checkbox);
             li.appendChild(span);
             li.appendChild(timeSpan);
             li.dataset.created = created;
             li.dataset.completed = completed;
-        
+
+            checkbox.addEventListener('click', () => {
+                span.classList.toggle('task-done', checkbox.checked)
+                if (checkbox.checked) {
+                    li.dataset.completed = new Date().toISOString();
+                    const timeDiff = calculateTimeDifference(created, li.dataset.completed);
+                    timeSpan.innerText = `Time taken: ${timeDiff}`;
+                } else {
+                    li.dataset.completed = false;
+                    timeSpan.innerText = '';
+                }
+                saveTasks();
+            });
+
             return li;
         }
 
@@ -114,7 +118,7 @@
             });
             localStorage.setItem('tasks', JSON.stringify(tasks));
         }
-        
+
         // Function to load tasks from local storage
         function getTasks() {
             return JSON.parse(localStorage.getItem('tasks')) || []
@@ -124,7 +128,7 @@
             const taskList = document.getElementById('taskList');
             if (!tasks.length) taskList.innerHTML = ''
             tasks.forEach(task => {
-                const taskItem = createTaskItem(task.text, task.done);
+                const taskItem = createTaskItem(task.text, task.done, task.created, task.completed);
                 taskList.appendChild(taskItem);
             });
         }
@@ -145,9 +149,11 @@
             const diffDays = Math.floor(diffMs / (24 * 60 * 60 * 1000));
             const diffHrs = Math.floor((diffMs % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
             const diffMins = Math.floor((diffMs % (60 * 60 * 1000)) / (60 * 1000));
+            const diffSecs = Math.floor((diffMs % (60 * 1000)) / 1000);
 
-            return `${diffDays}d ${diffHrs}h ${diffMins}m`;
+            return `${diffHrs}h ${diffMins}m`;
         }
+
 
         if ('serviceWorker' in navigator) {
             window.addEventListener('load', function () {
