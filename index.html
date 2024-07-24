@@ -98,7 +98,7 @@
                     const timeDiff = calculateTimeDifference(created, li.dataset.completed);
                     timeSpan.innerText = `Time taken: ${timeDiff}`;
                 } else {
-                    li.dataset.completed = false;
+                    li.dataset.completed = 'null';
                     timeSpan.innerText = '';
                 }
                 saveTasks();
