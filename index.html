@@ -16,12 +16,12 @@
         <div class="row justify-content-center">
             <div class="col-md-6 text-center">
                 <h1 id="todayDate"></h1>
-                <div class="row">
-                    <div class="col-lg-10">
+                <div class="row gap-2">
+                    <div class="col-sm-12">
                         <input type="text" id="taskInput" class="form-control" placeholder="Enter new task" onkeydown="if(event.key === 'Enter') addTask()">
                     </div>
-                    <div class="col-lg-2">
-                        <button class="btn btn-dark" id="clearAllTask">Clear All</button>
+                    <div class="col-sm-12 d-flex justify-content-start">
+                        <button class="btn btn-dark btn-sm" id="clearAllTask">Clear All</button>
                     </div>
                 </div>
                 
@@ -87,8 +87,11 @@
         }
 
         // Function to load tasks from local storage
+        function getTasks() {
+            return JSON.parse(localStorage.getItem('tasks')) || []
+        }
         function loadTasks() {
-            const tasks = JSON.parse(localStorage.getItem('tasks')) || [];
+            const tasks = getTasks()
             const taskList = document.getElementById('taskList');
             if(!tasks.length) taskList.innerHTML = ''
             tasks.forEach(task => {
@@ -99,10 +102,21 @@
 
         //  Delete All the Tasks
         clearAllTasks.addEventListener('click',() => {
+            if(!getTasks().length) return
             if(!confirm('Are you sure?')) return
             localStorage.removeItem('tasks')
             loadTasks()
         })
+
+        if ('serviceWorker' in navigator) {
+            window.addEventListener('load', function() {
+                navigator.serviceWorker.register('/service-worker.js').then(function(registration) {
+                    console.log('ServiceWorker registration successful with scope: ', registration.scope);
+                }, function(err) {
+                    console.log('ServiceWorker registration failed: ', err);
+                });
+            });
+        }
     </script>
 </body>
 </html>
