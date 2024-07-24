@@ -1,17 +1,27 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>My Minimal TM</title>
-    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet" integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.3/dist/css/bootstrap.min.css" rel="stylesheet"
+        integrity="sha384-QWTKZyjpPEjISv5WaRU9OFeRpok6YctnYmDr5pNlyT2bRjXh0JMhjY6hW+ALEwIH" crossorigin="anonymous">
+    <link rel="manifest" href="/manifest.json">
+    <link href="https://fonts.googleapis.com/css?family=Poppins" rel="stylesheet" type="text/css">
     <style>
+        * {
+            font-family: 'Poppins', sans-serif;
+        }
         .task-done {
             text-decoration: line-through;
         }
+       input[type="checkbox"]:checked {
+        accent-color: black;
+    }
     </style>
-    <link rel="manifest" href="/manifest.json">
 </head>
+
 <body>
     <div class="container mt-5">
         <div class="row justify-content-center">
@@ -19,13 +29,14 @@
                 <h1 id="todayDate"></h1>
                 <div class="row gap-2">
                     <div class="col-sm-12">
-                        <input type="text" id="taskInput" class="form-control" placeholder="Enter new task" onkeydown="if(event.key === 'Enter') addTask()">
+                        <input type="text" id="taskInput" class="form-control" placeholder="Enter new task"
+                            onkeydown="if(event.key === 'Enter') addTask()">
                     </div>
                     <div class="col-sm-12 d-flex justify-content-start">
                         <button class="btn btn-dark btn-sm" id="clearAllTask">Clear All</button>
                     </div>
                 </div>
-                
+
                 <ul id="taskList" class="list-group mt-3"></ul>
             </div>
         </div>
@@ -53,7 +64,7 @@
         }
 
         // Function to create a task item
-        function createTaskItem(text, done = false) {
+        function createTaskItem(text, done = false, created = new Date().toISOString(), completed = null) {
             const li = document.createElement('li');
             li.className = 'list-group-item d-flex ';
 
@@ -62,17 +73,32 @@
             checkbox.checked = done;
             checkbox.addEventListener('click', () => {
                 li.classList.toggle('task-done', checkbox.checked);
+                if (checkbox.checked) {
+                    li.dataset.completed = new Date().toISOString();
+                    const timeDiff = calculateTimeDifference(created, li.dataset.completed);
+                    timeSpan.innerText = `Time taken: ${timeDiff}`;
+                } else {
+                    li.dataset.completed = null;
+                    timeSpan.innerText = '';
+                }
                 saveTasks();
             });
-
+            
             const span = document.createElement('span');
-            span.className = 'ms-2 text-start'
+            span.className = 'ms-2 text-start';
             span.innerText = text;
             if (done) span.classList.add('task-done');
-
+        
+            const timeSpan = document.createElement('span');
+            timeSpan.className = 'ms-auto text-muted';
+            timeSpan.innerText = completed ? `Time taken: ${calculateTimeDifference(created, completed)}` : '';
+        
             li.appendChild(checkbox);
             li.appendChild(span);
-
+            li.appendChild(timeSpan);
+            li.dataset.created = created;
+            li.dataset.completed = completed;
+        
             return li;
         }
 
@@ -82,11 +108,13 @@
             document.querySelectorAll('#taskList li').forEach(li => {
                 const checkbox = li.querySelector('input[type="checkbox"]');
                 const text = li.querySelector('span').innerText;
-                tasks.push({ text, done: checkbox.checked });
+                const created = li.dataset.created;
+                const completed = li.dataset.completed;
+                tasks.push({ text, done: checkbox.checked, created, completed });
             });
             localStorage.setItem('tasks', JSON.stringify(tasks));
         }
-
+        
         // Function to load tasks from local storage
         function getTasks() {
             return JSON.parse(localStorage.getItem('tasks')) || []
@@ -94,7 +122,7 @@
         function loadTasks() {
             const tasks = getTasks()
             const taskList = document.getElementById('taskList');
-            if(!tasks.length) taskList.innerHTML = ''
+            if (!tasks.length) taskList.innerHTML = ''
             tasks.forEach(task => {
                 const taskItem = createTaskItem(task.text, task.done);
                 taskList.appendChild(taskItem);
@@ -102,22 +130,35 @@
         }
 
         //  Delete All the Tasks
-        clearAllTasks.addEventListener('click',() => {
-            if(!getTasks().length) return
-            if(!confirm('Are you sure?')) return
+        clearAllTasks.addEventListener('click', () => {
+            if (!getTasks().length) return
+            if (!confirm('Are you sure?')) return
             localStorage.removeItem('tasks')
             loadTasks()
         })
 
+        // Function to calculate the time difference between creation and completion
+        function calculateTimeDifference(start, end) {
+            const startTime = new Date(start);
+            const endTime = new Date(end);
+            const diffMs = endTime - startTime;
+            const diffDays = Math.floor(diffMs / (24 * 60 * 60 * 1000));
+            const diffHrs = Math.floor((diffMs % (24 * 60 * 60 * 1000)) / (60 * 60 * 1000));
+            const diffMins = Math.floor((diffMs % (60 * 60 * 1000)) / (60 * 1000));
+
+            return `${diffDays}d ${diffHrs}h ${diffMins}m`;
+        }
+
         if ('serviceWorker' in navigator) {
-            window.addEventListener('load', function() {
-                navigator.serviceWorker.register('/service-worker.js').then(function(registration) {
+            window.addEventListener('load', function () {
+                navigator.serviceWorker.register('/service-worker.js').then(function (registration) {
                     console.log('ServiceWorker registration successful with scope: ', registration.scope);
-                }, function(err) {
+                }, function (err) {
                     console.log('ServiceWorker registration failed: ', err);
                 });
             });
         }
     </script>
 </body>
+
 </html>
