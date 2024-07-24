@@ -22,5 +22,5 @@
   "lang": "en-US",
   "name": "Minimal TaskManager",
   "short_name": "MTM",
-  "start_url": "images/app"
+  "start_url": "/"
 }
